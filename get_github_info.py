@@ -1,15 +1,25 @@
 import requests
 from datetime import datetime, timedelta
-import google.generativeai as genai
+from google import genai
+from dotenv import load_dotenv
+import os
 
-# ==========================================
-# 1. 配置参数 (核心控制区)
-# ==========================================
-GEMINI_API_KEY = "AIzaSyDblVam4AhxVQ5l5ezISYqSMZbYwj33CSA"  # 替换为你的 Gemini API Key
+# 加载配置
+load_dotenv()
+
+# --- 变量提取 ---
+PROXY = os.getenv("PROXY")
+
+os.environ["HTTP_PROXY"] = PROXY
+os.environ["HTTPS_PROXY"] = PROXY
+
+GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
+client = genai.Client(api_key=GEMINI_API_KEY)
+
 GITHUB_PER_PAGE = 15                    # 稍微多抓几个给 AI 挑
 
 # 👇 这里是关键！你可以随便改成 7 (周报) 或者 30 (月报)
-REPORT_DAYS = 7                         
+REPORT_DAYS = 30                         
 
 # ==========================================
 # 2. 获取 GitHub 数据 (动态时间)
@@ -54,10 +64,8 @@ def get_github_trending(days):
 # 3. 使用 Gemini 进行总结分析 (动态 Prompt)
 # ==========================================
 def generate_report_with_gemini(context_data, days):
-    print("🧠 正在根据报告周期切换 AI 分析模式...")
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash') # 建议使用最新模型
-    
+    print("🧠 正在调用 Gemini 2.5 Flash 生成报告...")
+
     today = datetime.now().strftime('%Y年%m月%d日')
     
     # 根据天数判断报告类型
@@ -73,10 +81,10 @@ def generate_report_with_gemini(context_data, days):
         period_name = "一月"
         task_prompt = """
         1. 【全景回顾】：对列表中的每个项目，用**一句话**极其精简地概括其核心功能。
-        2. 【TOP 3 价值榜】：从中挑选出你认为本月**最有价值的 3 个项目**，进行深度点评，并重点分析它们的【实际应用场景】（例如：适合个人开发者提效、或是适合企业级大规模部署）。
+        2. 【TOP 5 价值榜】：从中挑选出你认为本月**最有价值的 5 个项目**，进行深度点评，并重点分析它们的【实际应用场景】（例如：适合个人开发者提效、或是适合企业级大规模部署）。
         """
 
-    prompt = f"""
+    full_prompt = f"""
     你是一位资深的开源技术分析师，拥有敏锐的技术洞察力。今天是 {today}。
     以下是我抓取的 GitHub 最近 {days} 天内创建的热门项目列表：
     
@@ -94,7 +102,11 @@ def generate_report_with_gemini(context_data, days):
     - 标题要具有吸引力，能够体现出本周/本月的技术风向。
     """
     
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model='gemini-2.5-flash', 
+        contents=full_prompt
+    )
+
     return response.text
 
 # ==========================================
