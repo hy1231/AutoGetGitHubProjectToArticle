@@ -123,8 +123,8 @@ def generate_report_with_gemini(context_data, days):
         # --- 月报模式：广度概括 + 精选点评 ---
         period_name = "月度"
         task_prompt = """
-        1. 按照star排序挑选10个项目，对每个项目用一句话概括其核心功能。
-        2. 挑选出你认为最有价值的 5 个项目，深度点评。
+        1. 按照star排序挑选10个项目，对每个项目用一句话极其精简地概括其核心功能。
+        2. 挑选出你认为最有价值的 5 个项目，注明项目的发表时间、star数、仓库地址，深度点评，并重点分析它们的【实际应用场景】。
         3. 总结本月的趋势。
         """
 
@@ -141,7 +141,7 @@ def generate_report_with_gemini(context_data, days):
     
     # 输出要求：
     - 使用专业的 Markdown 排版。
-    - 标题要具有吸引力，概括两个核心项目要点描述。
+    - 标题要具有吸引力，概括本月的核心趋势。
     """
     
     response = client.models.generate_content(
@@ -167,7 +167,7 @@ if __name__ == "__main__":
         
         # 3. 动态命名文件（加上周报或月报的标识）
         report_type = "Weekly" if REPORT_DAYS <= 7 else "Monthly"
-        filename = f"GitHub_{report_type}_Report_{datetime.now().strftime('%Y%m%d')}.md"
+        filename = f"output/GitHub_{report_type}_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
 
         with open(filename, "w", encoding="utf-8") as f:
             f.write(final_report)
