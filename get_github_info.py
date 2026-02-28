@@ -1,5 +1,6 @@
 import requests
 from datetime import datetime, timedelta
+import re
 from google import genai
 from dotenv import load_dotenv
 import os
@@ -20,6 +21,7 @@ GITHUB_PER_PAGE = 15                    # 稍微多抓几个给 AI 挑
 
 # 👇 这里是关键！你可以随便改成 7 (周报) 或者 30 (月报)
 REPORT_DAYS = 30                         
+   
 
 # ==========================================
 # 2. 获取 GitHub 数据 (动态时间)
@@ -49,16 +51,56 @@ def get_github_trending(days):
     
     repo_list = []
     for i, repo in enumerate(items):
+        full_name = repo.get('full_name') # 获取完整路径用于请求 README
         name = repo.get('name', 'N/A')
         stars = repo.get('stargazers_count', 0)
         language = repo.get('language', '未知')
         desc = repo.get('description', '无描述')
         url = repo.get('html_url', '#')
         
-        repo_info = f"{i+1}. 项目名: {name} | 星标: {stars} | 语言: {language}\n   描述: {desc}\n   链接: {url}"
+        # --- 新增：抓取 README 详情 ---
+        print(f"   📖 正在深度抓取项目详情: {name}...")
+        readme_content = get_repo_readme(full_name)
+        
+        # 将 README 内容整合到发送给 Gemini 的数据中
+        repo_info = (
+            f"{i+1}. 项目名: {name} | 星标: {stars} | 语言: {language}\n"
+            f"   描述: {desc}\n"
+            f"   详情(README片段): {readme_content}\n"
+            f"   链接: {url}"
+        )
         repo_list.append(repo_info)
         
     return "\n\n".join(repo_list)
+
+
+def get_repo_readme(full_name):
+    url = f"https://api.github.com/repos/{full_name}/readme"
+    headers = {"Accept": "application/vnd.github.v3.raw"}
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            content = response.text
+            
+            # --- 核心清洗逻辑 ---
+            # 1. 去除 HTML 标签 (如 <img...>, <div...>, <a>...)
+            clean_text = re.sub(r'<[^>]+>', '', content)
+            
+            # 2. 去除 Markdown 格式的图片链接 [![]()]
+            clean_text = re.sub(r'!\[.*?\]\(.*?\)', '', clean_text)
+            
+            # 3. 去除多余的空白行和空格
+            clean_text = "\n".join([line.strip() for line in clean_text.splitlines() if line.strip()])
+            
+            # 4. 截取中间部分的干货 (跳过可能存在的剩余链接区)
+            # 我们取清洗后内容的前 800 个字，通常这就包含了项目的真正介绍
+            return clean_text[:800]
+            
+        return "（无法获取详细内容）"
+    except Exception:
+        return "（读取出错）"
+
 
 # ==========================================
 # 3. 使用 Gemini 进行总结分析 (动态 Prompt)
@@ -69,19 +111,21 @@ def generate_report_with_gemini(context_data, days):
     today = datetime.now().strftime('%Y年%m月%d日')
     
     # 根据天数判断报告类型
-    if days <= 7:
+    if days == 7:
         # --- 周报模式：深度介绍核心项目 ---
-        period_name = "一周"
+        period_name = "周度"
         task_prompt = """
-        1. 【核心精选】：从列表中挑选出 5 个最具有潜力和技术价值的项目。
-        2. 【深度点评】：对每个项目进行详细介绍，包括：它解决了什么技术痛点、其核心亮点是什么、以及它为什么能在这个月获得高星标。
+        1. 从列表中挑选出1-5个最具有潜力和技术价值的项目，一句话描述核心功能。
+        2. 列举每个项目，注明项目的发表时间、star数、仓库地址。
+        3. 对每个项目进行深度点评。
         """
-    else:
+    elif days == 30:
         # --- 月报模式：广度概括 + 精选点评 ---
-        period_name = "一月"
+        period_name = "月度"
         task_prompt = """
-        1. 【全景回顾】：对列表中的每个项目，用**一句话**极其精简地概括其核心功能。
-        2. 【TOP 5 价值榜】：从中挑选出你认为本月**最有价值的 5 个项目**，进行深度点评，并重点分析它们的【实际应用场景】（例如：适合个人开发者提效、或是适合企业级大规模部署）。
+        1. 按照star排序挑选10个项目，对每个项目用一句话概括其核心功能。
+        2. 挑选出你认为最有价值的 5 个项目，深度点评。
+        3. 总结本月的趋势。
         """
 
     full_prompt = f"""
@@ -95,11 +139,9 @@ def generate_report_with_gemini(context_data, days):
     # 任务要求：
     {task_prompt}
     
-    3. 【技术趋势观察】：根据本报告期内所有项目的分布，总结一段技术趋势观察（例如：某种新架构的流行、AI 赛道的细分化等）。
-    
     # 输出要求：
     - 使用专业的 Markdown 排版。
-    - 标题要具有吸引力，能够体现出本周/本月的技术风向。
+    - 标题要具有吸引力，概括两个核心项目要点描述。
     """
     
     response = client.models.generate_content(
