@@ -20,7 +20,7 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 GITHUB_PER_PAGE = 15                    # 稍微多抓几个给 AI 挑
 
 # 👇 这里是关键！你可以随便改成 7 (周报) 或者 30 (月报)
-REPORT_DAYS = 30                         
+REPORT_DAYS = 7                         
    
 
 # ==========================================
@@ -115,9 +115,10 @@ def generate_report_with_gemini(context_data, days):
         # --- 周报模式：深度介绍核心项目 ---
         period_name = "周度"
         task_prompt = """
-        1. 从列表中挑选出1-5个最具有潜力和技术价值的项目，一句话描述核心功能。
-        2. 列举每个项目，注明项目的发表时间、star数、仓库地址。
-        3. 对每个项目进行深度点评。
+        1. 按照star排序挑选10个项目，对每个项目用一句话极其精简地概括其核心功能。
+        2. 挑选出你认为最有价值的 5 个项目，注明项目的发表时间、star数、仓库地址，深度点评，并重点分析它们的【实际应用场景】。
+        3. 总结本周的趋势。
+        4. 标题要具有吸引力，可以包含本周两个热点项目名称。
         """
     elif days == 30:
         # --- 月报模式：广度概括 + 精选点评 ---
@@ -126,6 +127,7 @@ def generate_report_with_gemini(context_data, days):
         1. 按照star排序挑选10个项目，对每个项目用一句话极其精简地概括其核心功能。
         2. 挑选出你认为最有价值的 5 个项目，注明项目的发表时间、star数、仓库地址，深度点评，并重点分析它们的【实际应用场景】。
         3. 总结本月的趋势。
+        4. 标题要具有吸引力，可以包含本月两个项目热点。
         """
 
     full_prompt = f"""
@@ -141,7 +143,6 @@ def generate_report_with_gemini(context_data, days):
     
     # 输出要求：
     - 使用专业的 Markdown 排版。
-    - 标题要具有吸引力，概括本月的核心趋势。
     """
     
     response = client.models.generate_content(
