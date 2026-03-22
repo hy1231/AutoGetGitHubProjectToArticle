@@ -4,7 +4,7 @@ import re
 from google import genai
 from dotenv import load_dotenv
 import os
-
+from datetime import datetime, timezone, timedelta
 # 加载配置
 load_dotenv()
 
@@ -29,8 +29,9 @@ REPORT_DAYS = 7
 def get_github_trending(days):
     print(f"🔍 正在获取 GitHub 最近 {days} 天的热门项目...")
     
-    # 动态计算 N 天前的日期
-    target_date = (datetime.utcnow() - timedelta(days=days)).strftime('%Y-%m-%d')
+
+    # 动态计算 N 天前的日期 (使用现代推荐写法)
+    target_date = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
     
     url = "https://api.github.com/search/repositories"
     params = {
@@ -57,6 +58,21 @@ def get_github_trending(days):
         language = repo.get('language', '未知')
         desc = repo.get('description', '无描述')
         url = repo.get('html_url', '#')
+        created_at_raw = repo.get('created_at')
+        if created_at_raw:
+            # 1. 把带 Z 的字符串解析为时间对象，并强制指定它是 UTC 时区
+            utc_dt = datetime.strptime(created_at_raw, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+            
+            # 2. 定义北京时间时区 (UTC+8)
+            beijing_tz = timezone(timedelta(hours=8))
+            
+            # 3. 转换到北京时间
+            local_dt = utc_dt.astimezone(beijing_tz)
+            
+            # 4. 格式化为漂亮的字符串，例如 "2023-10-01 20:00:00"
+            created_at = local_dt.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            created_at = '未知'
         
         # --- 新增：抓取 README 详情 ---
         print(f"   📖 正在深度抓取项目详情: {name}...")
@@ -64,7 +80,7 @@ def get_github_trending(days):
         
         # 将 README 内容整合到发送给 Gemini 的数据中
         repo_info = (
-            f"{i+1}. 项目名: {name} | 星标: {stars} | 语言: {language}\n"
+            f"{i+1}. 项目名: {name} | 星标: {stars} | 语言: {language} | 创建时间: {created_at}\n"
             f"   描述: {desc}\n"
             f"   详情(README片段): {readme_content}\n"
             f"   链接: {url}"
