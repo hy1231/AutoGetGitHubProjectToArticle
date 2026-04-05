@@ -20,11 +20,11 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 GITHUB_PER_PAGE = 15                    # 稍微多抓几个给 AI 挑
 
 # 设置报告展示的周期类型：例如 "周度"、"月度"、"季度" 或 "年度"
-REPORT_TYPE = "月度" 
+REPORT_TYPE = "周度" 
 
 # 设置 GitHub 抓取的精确起止日期 (格式: YYYY-MM-DD)
-START_DATE = "2026-03-01"
-END_DATE = "2026-03-31"
+START_DATE = "2026-04-01"
+END_DATE = "2026-04-05"
    
 
 # ==========================================
@@ -110,7 +110,7 @@ def get_repo_readme(full_name):
             clean_text = "\n".join([line.strip() for line in clean_text.splitlines() if line.strip()])
             
             # 4. 截取中间部分的干货 (跳过可能存在的剩余链接区)
-            # 我们取清洗后内容的前 800 个字，通常这就包含了项目的真正介绍
+            # 我们取清洗后内容的前 2000 个字，通常这就包含了项目的真正介绍
             return clean_text[:2000]
             
         return "（无法获取详细内容）"
@@ -130,7 +130,7 @@ def generate_report_with_gemini(context_data, report_type):
         task_prompt = """
         1. 按照star排序挑选10个项目，对每个项目用一句话极其精简地概括其核心功能。
         2. 挑选出你认为最有价值的 5 个项目，注明项目的发表时间、star数、仓库地址，深度点评，并重点分析它们的【实际应用场景】。
-        3. 总结本周的趋势。
+        3. 总结本周的趋势的概要。
         4. 标题要具有吸引力，可以包含本周两个热点项目名称。
         """
     elif report_type == "月度":
@@ -138,7 +138,7 @@ def generate_report_with_gemini(context_data, report_type):
         task_prompt = """
         1. 按照star排序挑选10个项目，对每个项目用一句话极其精简地概括其核心功能。
         2. 挑选出你认为最有价值的 5 个项目，注明项目的发表时间、star数、仓库地址，深度点评，并重点分析它们的【实际应用场景】。
-        3. 总结本月的趋势。
+        3. 总结本月的趋势的概要。
         4. 标题要具有吸引力，可以包含本月两个热点项目名称。
         """
 
