@@ -61,6 +61,11 @@ END_DATE = "2026-04-05"
 - 趋势概要总结
 - 项目链接和详细信息
 
+最终生成markdown格式
+![](assets/markdown格式.png)
+
+公众号效果
+![](assets/公众号.png)
 ## 技术栈
 
 - Python 3
