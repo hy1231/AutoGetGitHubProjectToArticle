@@ -23,8 +23,8 @@ GITHUB_PER_PAGE = 15                    # 稍微多抓几个给 AI 挑
 REPORT_TYPE = "周度" 
 
 # 设置 GitHub 抓取的精确起止日期 (格式: YYYY-MM-DD)
-START_DATE = "2026-04-01"
-END_DATE = "2026-04-05"
+START_DATE = "2026-04-06"
+END_DATE = "2026-04-12"
    
 
 # ==========================================
@@ -122,7 +122,7 @@ def get_repo_readme(full_name):
 # 3. 使用 Gemini 进行总结分析 (动态 Prompt)
 # ==========================================
 def generate_report_with_gemini(context_data, report_type):
-    print("🧠 正在调用 Gemini 2.5 Flash 生成报告...")
+    print("🧠 正在调用 gemini-3-flash-preview 生成报告...")
     
     # 根据天数判断报告类型
     if report_type == "周度":
@@ -158,7 +158,7 @@ def generate_report_with_gemini(context_data, report_type):
     """
     
     response = client.models.generate_content(
-        model='gemini-2.5-flash', 
+        model='gemini-3-flash-preview', 
         contents=full_prompt
     )
 
