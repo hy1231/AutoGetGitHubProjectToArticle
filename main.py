@@ -10,7 +10,6 @@ from datetime import datetime, timezone, timedelta
 # 加载配置
 load_dotenv()
 
-
 PROXY = os.getenv("PROXY")
 os.environ["HTTP_PROXY"] = PROXY
 os.environ["HTTPS_PROXY"] = PROXY
@@ -24,8 +23,8 @@ GITHUB_PER_PAGE = 15                    # 稍微多抓几个给 AI 挑
 REPORT_TYPE = "周度" 
 
 # 设置 GitHub 抓取的精确起止日期 (格式: YYYY-MM-DD)
-START_DATE = "2026-04-13"
-END_DATE = "2026-04-19"
+START_DATE = "2026-04-20"
+END_DATE = "2026-04-26"
    
 
 # ==========================================
@@ -123,21 +122,21 @@ def get_repo_readme(full_name):
 # 3. 使用 Gemini 进行总结分析 (动态 Prompt)
 # ==========================================
 def generate_report_with_gemini(context_data, report_type):
-    print("🧠 正在调用 gemini-3-flash-preview 生成报告...")
+    print("🧠 正在调用 gemini生成报告...")
     
     # 根据天数判断报告类型
     if report_type == "周度":
         # --- 周报模式：深度介绍核心项目 ---
         task_prompt = """
-        1. 按照star排序挑选10个项目，对每个项目用一句话极其精简地概括其核心功能，star数。
+        1. 按照star排序挑选10个项目，对每个项目用一句话极其精简地概括其核心功能，star数。格式：项目名称（star数⭐|语言）：概括。
         2. 挑选出你认为最有价值的 5 个项目，注明项目的发表时间、star数⭐、仓库地址，深度点评，并重点分析它们的【实际应用场景】。
-        3. 总结本周的趋势的概要。
+        3. 总结本周的趋势的概要,2-3点。
         4. 标题要具有吸引力，可以包含本周两个热点项目名称。
         """
     elif report_type == "月度":
         # --- 月报模式：广度概括 + 精选点评 ---
         task_prompt = """
-        1. 按照star排序挑选10个项目，对每个项目用一句话极其精简地概括其核心功能，star数。
+        1. 按照star排序挑选10个项目，对每个项目用一句话极其精简地概括其核心功能，star数。格式：项目名称（star数⭐|语言）：概括。
         2. 挑选出你认为最有价值的 5 个项目，注明项目的发表时间、star数⭐、仓库地址，深度点评，并重点分析它们的【实际应用场景】。
         3. 总结本月的趋势的概要。
         4. 标题要具有吸引力，可以包含本月两个热点项目名称。
