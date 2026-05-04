@@ -23,8 +23,8 @@ GITHUB_PER_PAGE = 15                    # 稍微多抓几个给 AI 挑
 REPORT_TYPE = "周度" 
 
 # 设置 GitHub 抓取的精确起止日期 (格式: YYYY-MM-DD)
-START_DATE = "2026-04-20"
-END_DATE = "2026-04-26"
+START_DATE = "2026-04-27"
+END_DATE = "2026-05-03"
    
 
 # ==========================================
