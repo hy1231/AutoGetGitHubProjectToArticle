@@ -5,6 +5,9 @@ import os
 # 加载配置
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
+PROXY = os.getenv("PROXY")
+os.environ["HTTP_PROXY"] = PROXY
+os.environ["HTTPS_PROXY"] = PROXY
 
 # --- 关键改动：创建 Client 对象 ---
 client = genai.Client(api_key=GEMINI_API_KEY)

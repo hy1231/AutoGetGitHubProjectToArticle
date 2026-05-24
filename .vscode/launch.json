@@ -10,6 +10,16 @@
             "cwd": "${workspaceFolder}",
             "envFile": "${workspaceFolder}/.env",
             "justMyCode": true
+        },
+        {
+            "name": "ai_model_list_test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ai_model_list_test.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/.env",
+            "justMyCode": true
         }
     ]
 }
